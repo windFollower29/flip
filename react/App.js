@@ -23,10 +23,11 @@ export default class App extends Component {
 
     return (
       <div>
-        <button
+        <span
+          className="dialog-btn"
           ref={el => this.btnRef = el}
           onClick={this.onClick}
-        >open dialog</button>
+        >open dialog</span>
 
         <button
           onClick={this.changeList}
