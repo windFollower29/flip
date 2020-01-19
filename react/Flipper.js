@@ -11,6 +11,19 @@ function cloneChildWithRefs (child) {
   return React.cloneElement(child, { ref: child.key })
 }
 
+function getPlaceholderRect (node) {
+  let { offsetLeft: x, offsetTop: y } = node
+  while (
+    node.parentNode &&
+    node.parentNode.tagName.toLocaleLowerCase() != 'html'
+  ) {
+    x += node.parentNode.offsetLeft
+    y += node.parentNode.offsetTop
+    node = node.parentNode
+  }
+  return { x, y }
+}
+
 function getPositionFromParent (node) {
   if (!node.parentElement) return {}
   node = node.parentElement
@@ -48,13 +61,10 @@ export default class Flipper extends Component {
 
   doAnimation () {
     let first = this.props.firstRect
-
-    this.cloneChildren.forEach(node => {
-
-      const prevRect = this.cacheRectData[node.key]
-      !!prevRect && (first = prevRect)
+    console.log('doAnimation')
+    this.state.cloneChildren.forEach(node => {
       // first render && no animationIn demand
-      if (!prevRect && !this.props.firstRect) return;
+      if (!first) return;
 
       const dom = ReactDOM.findDOMNode(this.refs[node.key])
       const last = dom.getBoundingClientRect()
@@ -129,10 +139,9 @@ export default class Flipper extends Component {
   componentDidMount () {
     // console.log('componentDidMount')
     window.$$0 = this
-    // this.flipperRef = null
-    // this.cacheNode = {}
 
-    // this.doAnimation()
+    const cloneChildren = getArrayChildren(this.props.children)
+    this.setState({ cloneChildren })
   }
 
   playFlip (dom, diffX, diffY, opacity = [1, 1], finishCb = function () {}) {
@@ -165,7 +174,14 @@ export default class Flipper extends Component {
 
   // 设置新增元素的过场动画
   flipEnterNode (dom) {
-    this.playFlip(dom, 50, 0, [0, 1])
+    const { firstRect } = this.props
+    if (firstRect) {
+      const { x, y } = dom.getBoundingClientRect()
+      this.playFlip(dom, firstRect.x - x, firstRect.y - y, [0, 1])
+      return
+    }
+    this.playFlip(dom, 50, 10, [0, 1])
+    // this.doAnimation()
   }
 
   // 设置删除元素的过场动画
@@ -183,7 +199,8 @@ export default class Flipper extends Component {
     this.playFlip(
       dom,
       x - last.x,
-      y - last.y,
+      // y - last.y,
+      0,
       [1, 0],
       () => {
         // console.log(this.state.cloneChildren)
@@ -198,15 +215,22 @@ export default class Flipper extends Component {
   }
 
   // 设置移动元素的过场动画
-  flipMoveNode (dom, first) {
+  flipMoveNode (dom, first, node) {
+    
+    // const last = dom.getBoundingClientRect()
+    const { x, y } = dom.getBoundingClientRect()
+    const last = getPlaceholderRect(dom)
+    const dx = x - last.x
+    // 当做增加操作时，为什么取first.y，不取y？因为增加item会影响y轴方向（btw：x轴的first位置才因此这么处理）。在快速操作下，第二个新增时，第一个新增的item位置会突变，动画也突变
+    const dy = first.y - last.y
 
-    const last = dom.getBoundingClientRect()
-    const diffX = first.x - last.x
-    const diffY = first.y - last.y
+    // if (node.key == '.$65088') {
+    //   console.log(x, first.x, '---', last.y, first.y)
+    // }
 
-    if (!diffX && !diffY) return;
+    if (!dx && !dy) return;
 
-    this.playFlip(dom, diffX, diffY)
+    this.playFlip(dom, dx, dy)
   }
 
   componentDidUpdate (prevProps) {
@@ -226,12 +250,12 @@ export default class Flipper extends Component {
         }
 
       } else if (first) {
-        // console.log('move元素')
+        console.log('move元素')
         // console.log(first.x)
-        this.flipMoveNode(dom, first)
+        this.flipMoveNode(dom, first, node)
         
       } else {
-        // console.log('enter元素')
+        console.log('enter元素')
         this.flipEnterNode(dom)
       }
     })
@@ -241,7 +265,7 @@ export default class Flipper extends Component {
   componentWillReceiveProps (nextProps) {
     // console.log('componentWillReceiveProps')
 
-    // 事实：每次进来，只能+1/-1/换位
+    // 预设：每次进来，只能+1/-1/换位
     let children = []
     const nextChildren = getArrayChildren(nextProps.children)
     const curChildren = getArrayChildren(this.props.children)
@@ -324,6 +348,7 @@ export default class Flipper extends Component {
               margin: 0
             }
           })
+          console.log('remove', first.x, x, first.y, y)
           break;
         }
       }

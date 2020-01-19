@@ -9,7 +9,7 @@ export default class Dialog extends Component {
         <div className="dialog -large"
           onClick={this.props.close}
         >
-          <h1>hello world!</h1>
+          <h1>click me to close!</h1>
         </div>
       // </div>
     )

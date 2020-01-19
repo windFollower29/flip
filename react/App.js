@@ -5,20 +5,14 @@ import Dialog from './Dialog'
 
 import './style.scss'
 
-const style = {
-  dialog: {
-    transition: 'all 5.5s cubic-bezier(0.6, 0.04, 0.98, 0.335)'
-  }
-}
-
-let backup = ['👬','😱','😓','😻','🙅‍♂️','😔','😄','😊','❌','1️⃣','👴']
+let backup = ['1️⃣','👬','😱','😓','😻','🙅‍♂️','😔','😄','😊','❌','👴', '🇨🇳', '🔟', '😍', '🤤', '👌', '🏓', '🏃‍♀️']
 
 export default class App extends Component {
 
   state = {
     showDialog: false,
     firstRect: {},
-    emojis: ['😯', '😈', '🙂', '🇨🇳', '🔟', '😍', '🤤', '👌', '🏓', '🏃‍♀️']
+    emojis: ['😯', '😈', '🙂']
   }
 
   render () {
@@ -34,28 +28,32 @@ export default class App extends Component {
           onClick={this.onClick}
         >open dialog</button>
 
+        <button
+          onClick={this.changeList}
+        >换</button>
+
         {
-          // this.state.showDialog
-          //   ? (
-          //     <div className="dialog-wrapper">
-          //       <Flipper
-          //         duration={1000}
-          //         firstRect={firstRect}
-          //       >
-          //         <Dialog
-          //           key="dialog"
-          //           close={this.close.bind(this)}
-          //         />
-          //       </Flipper>
-          //     </div>
-          //   )
-          //   : null
+          this.state.showDialog
+            ? (
+              <div className="dialog-wrapper">
+                <Flipper
+                  duration={1000}
+                  firstRect={firstRect}
+                >
+                  <Dialog
+                    key="dialog"
+                    close={this.close.bind(this)}
+                  />
+                </Flipper>
+              </div>
+            )
+            : null
         }
 
         <ul className="emoji-list">
           <Flipper
-            duration={3000}
-            // firstRect={firstRect}
+            duration={800}
+            // firstRect={}
           >
             {
               emojis.map((emoji, idx) => (
@@ -76,6 +74,9 @@ export default class App extends Component {
                         <span className="up"
                           onClick={this.doUp.bind(this, emoji)}
                         >↑</span>
+                        <span className="stickTop"
+                          onClick={this.stickTop.bind(this, emoji)}
+                        >⇪</span>
                       </div>
                     </div>
                   </li>
@@ -97,6 +98,10 @@ export default class App extends Component {
     this.setState({ showDialog: true })
   }
 
+  changeList = () => {
+    this.setState({ emojis: ['😱', '😓', '😈'] })
+  }
+
   doUp (emoji) {
     const list = [ ...this.state.emojis ]
     const idx = list.findIndex(item => item == emoji)
@@ -105,6 +110,15 @@ export default class App extends Component {
 
     list.splice(idx - 1, 2, list[idx], list[idx - 1])
 
+    this.setState({ emojis: list })
+  }
+
+  stickTop (emoji) {
+    const list = [ ...this.state.emojis ]
+    const idx = list.findIndex(item => item == emoji)
+    list.splice(idx, 1, list[0])
+    list.splice(0, 1, emoji)
+    console.log('==')
     this.setState({ emojis: list })
   }
 
